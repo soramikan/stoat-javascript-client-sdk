@@ -32,6 +32,7 @@ import type {
   DiscordEmbedAuthor,
   DiscordEmbedField,
   DiscordEmbedFooter,
+  DiscordEmbedProvider,
 } from "./MessageEmbed.js";
 import type { Server } from "./Server.js";
 import type { ServerMember } from "./ServerMember.js";
@@ -54,6 +55,8 @@ export interface RichMessageEmbed {
   fields?: DiscordEmbedField[] | null;
   image?: DiscordEmbedAsset | null;
   thumbnail?: DiscordEmbedAsset | null;
+  video?: DiscordEmbedAsset | null;
+  provider?: DiscordEmbedProvider | null;
   timestamp?: string | Date | null;
 }
 

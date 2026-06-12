@@ -207,6 +207,8 @@ export class TextEmbed extends MessageEmbed {
   readonly fields?: DiscordEmbedField[];
   readonly image?: DiscordEmbedAsset;
   readonly thumbnail?: DiscordEmbedAsset;
+  readonly video?: DiscordEmbedAsset;
+  readonly provider?: DiscordEmbedProvider;
   readonly timestamp?: Date;
 
   /**
@@ -229,6 +231,8 @@ export class TextEmbed extends MessageEmbed {
     this.fields = embed.fields;
     this.image = embed.image;
     this.thumbnail = embed.thumbnail;
+    this.video = embed.video;
+    this.provider = embed.provider;
     this.timestamp = embed.timestamp ? new Date(embed.timestamp) : undefined;
   }
 
@@ -262,6 +266,13 @@ export class TextEmbed extends MessageEmbed {
     return (
       this.thumbnail?.proxy_url ?? this.proxyOptionalURL(this.thumbnail?.url)
     );
+  }
+
+  /**
+   * Proxied URL for Discord-compatible video.
+   */
+  get proxiedVideoURL(): string | undefined {
+    return this.video?.proxy_url ?? this.proxyOptionalURL(this.video?.url);
   }
 
   /**
@@ -315,6 +326,11 @@ export interface DiscordEmbedField {
   inline?: boolean;
 }
 
+export interface DiscordEmbedProvider {
+  name?: string;
+  url?: string;
+}
+
 type TextEmbedData = Omit<Embed & { type: "Text" }, "type"> & {
   color?: number;
   author?: DiscordEmbedAuthor;
@@ -322,5 +338,7 @@ type TextEmbedData = Omit<Embed & { type: "Text" }, "type"> & {
   fields?: DiscordEmbedField[];
   image?: DiscordEmbedAsset;
   thumbnail?: DiscordEmbedAsset;
+  video?: DiscordEmbedAsset;
+  provider?: DiscordEmbedProvider;
   timestamp?: string;
 };
