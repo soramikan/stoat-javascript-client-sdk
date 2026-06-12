@@ -43,6 +43,7 @@ import { VoiceParticipant } from "./VoiceParticipant.js";
  * Discord-compatible rich embed payload for message sending.
  */
 export interface RichMessageEmbed {
+  type?: "rich" | string | null;
   icon_url?: string | null;
   url?: string | null;
   title?: string | null;
