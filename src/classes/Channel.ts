@@ -27,10 +27,42 @@ import { Permission } from "../permissions/definitions.js";
 import type { ChannelWebhook } from "./ChannelWebhook.js";
 import type { File } from "./File.js";
 import type { Message } from "./Message.js";
+import type {
+  DiscordEmbedAsset,
+  DiscordEmbedAuthor,
+  DiscordEmbedField,
+  DiscordEmbedFooter,
+} from "./MessageEmbed.js";
 import type { Server } from "./Server.js";
 import type { ServerMember } from "./ServerMember.js";
 import type { User } from "./User.js";
 import { VoiceParticipant } from "./VoiceParticipant.js";
+
+/**
+ * Discord-compatible rich embed payload for message sending.
+ */
+export interface RichMessageEmbed {
+  icon_url?: string | null;
+  url?: string | null;
+  title?: string | null;
+  description?: string | null;
+  media?: string | null;
+  colour?: string | null;
+  color?: number | null;
+  author?: DiscordEmbedAuthor | null;
+  footer?: DiscordEmbedFooter | null;
+  fields?: DiscordEmbedField[] | null;
+  image?: DiscordEmbedAsset | null;
+  thumbnail?: DiscordEmbedAsset | null;
+  timestamp?: string | Date | null;
+}
+
+/**
+ * Message send payload with Stoat and Discord-compatible rich embeds.
+ */
+export type RichDataMessageSend = Omit<DataMessageSend, "embeds"> & {
+  embeds?: RichMessageEmbed[] | null;
+};
 
 /**
  * Channel Class
@@ -523,10 +555,10 @@ export class Channel {
    * @returns Sent message
    */
   async sendMessage(
-    data: string | DataMessageSend,
+    data: string | RichDataMessageSend,
     idempotencyKey: string = ulid(),
   ): Promise<Message> {
-    const msg: DataMessageSend =
+    const msg: RichDataMessageSend =
       typeof data === "string" ? { content: data } : data;
 
     // Mark as silent message
@@ -538,7 +570,7 @@ export class Channel {
 
     const message = await this.#collection.client.api.post(
       `/channels/${this.id as ""}/messages`,
-      msg,
+      msg as DataMessageSend,
       {
         headers: {
           "Idempotency-Key": idempotencyKey,

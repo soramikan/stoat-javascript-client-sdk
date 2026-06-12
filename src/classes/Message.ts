@@ -4,7 +4,6 @@ import type {
   Message as APIMessage,
   MessageWebhook as APIMessageWebhook,
   DataEditMessage,
-  DataMessageSend,
   Masquerade,
 } from "stoat-api";
 import { decodeTime } from "ulid";
@@ -13,7 +12,7 @@ import type { Client } from "../Client.js";
 import type { MessageCollection } from "../collections/MessageCollection.js";
 import { MessageFlags } from "../hydration/message.js";
 
-import type { Channel } from "./Channel.js";
+import type { Channel, RichDataMessageSend } from "./Channel.js";
 import { File } from "./File.js";
 import type { MessageEmbed } from "./MessageEmbed.js";
 import type { Server } from "./Server.js";
@@ -364,7 +363,7 @@ export class Message {
   reply(
     data:
       | string
-      | (Omit<DataMessageSend, "nonce"> & {
+      | (Omit<RichDataMessageSend, "nonce"> & {
           nonce?: string;
         }),
     mention = true,

@@ -201,13 +201,20 @@ export class TextEmbed extends MessageEmbed {
   readonly description?: string;
   readonly media?: File;
   readonly colour?: string;
+  readonly color?: number;
+  readonly author?: DiscordEmbedAuthor;
+  readonly footer?: DiscordEmbedFooter;
+  readonly fields?: DiscordEmbedField[];
+  readonly image?: DiscordEmbedAsset;
+  readonly thumbnail?: DiscordEmbedAsset;
+  readonly timestamp?: Date;
 
   /**
    * Construct Video Embed
    * @param client Client
    * @param embed Embed
    */
-  constructor(client: Client, embed: Omit<Embed & { type: "Text" }, "type">) {
+  constructor(client: Client, embed: TextEmbedData) {
     super(client, "Text");
 
     this.iconUrl = embed.icon_url!;
@@ -216,6 +223,13 @@ export class TextEmbed extends MessageEmbed {
     this.description = embed.description!;
     this.media = embed.media ? new File(client, embed.media) : undefined;
     this.colour = embed.colour!;
+    this.color = embed.color;
+    this.author = embed.author;
+    this.footer = embed.footer;
+    this.fields = embed.fields;
+    this.image = embed.image;
+    this.thumbnail = embed.thumbnail;
+    this.timestamp = embed.timestamp ? new Date(embed.timestamp) : undefined;
   }
 
   /**
@@ -224,4 +238,89 @@ export class TextEmbed extends MessageEmbed {
   get proxiedIconURL(): string | undefined {
     return this.iconUrl ? this.client?.proxyFile(this.iconUrl) : undefined;
   }
+
+  /**
+   * CSS colour derived from Discord's integer colour field.
+   */
+  get colorHex(): string | undefined {
+    return typeof this.color === "number"
+      ? `#${this.color.toString(16).padStart(6, "0")}`
+      : undefined;
+  }
+
+  /**
+   * Proxied URL for Discord-compatible large image.
+   */
+  get proxiedImageURL(): string | undefined {
+    return this.image?.proxy_url ?? this.proxyOptionalURL(this.image?.url);
+  }
+
+  /**
+   * Proxied URL for Discord-compatible thumbnail.
+   */
+  get proxiedThumbnailURL(): string | undefined {
+    return (
+      this.thumbnail?.proxy_url ?? this.proxyOptionalURL(this.thumbnail?.url)
+    );
+  }
+
+  /**
+   * Proxied URL for Discord-compatible author icon.
+   */
+  get proxiedAuthorIconURL(): string | undefined {
+    return (
+      this.author?.proxy_icon_url ??
+      this.proxyOptionalURL(this.author?.icon_url)
+    );
+  }
+
+  /**
+   * Proxied URL for Discord-compatible footer icon.
+   */
+  get proxiedFooterIconURL(): string | undefined {
+    return (
+      this.footer?.proxy_icon_url ??
+      this.proxyOptionalURL(this.footer?.icon_url)
+    );
+  }
+
+  private proxyOptionalURL(url?: string): string | undefined {
+    return url ? this.client?.proxyFile(url) : undefined;
+  }
 }
+
+export interface DiscordEmbedAsset {
+  url: string;
+  proxy_url?: string;
+  width?: number;
+  height?: number;
+}
+
+export interface DiscordEmbedAuthor {
+  name: string;
+  url?: string;
+  icon_url?: string;
+  proxy_icon_url?: string;
+}
+
+export interface DiscordEmbedFooter {
+  text: string;
+  icon_url?: string;
+  proxy_icon_url?: string;
+}
+
+export interface DiscordEmbedField {
+  name: string;
+  value: string;
+  inline?: boolean;
+}
+
+type TextEmbedData = Omit<Embed & { type: "Text" }, "type"> & {
+  color?: number;
+  author?: DiscordEmbedAuthor;
+  footer?: DiscordEmbedFooter;
+  fields?: DiscordEmbedField[];
+  image?: DiscordEmbedAsset;
+  thumbnail?: DiscordEmbedAsset;
+  timestamp?: string;
+};
