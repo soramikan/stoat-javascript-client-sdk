@@ -657,6 +657,14 @@ export async function handleEvent(
     case "ChannelAck": {
       const channel = client.channels.getOrPartial(event.id);
       if (channel) {
+        if (client.options.syncUnreads && event.user === client.user!.id) {
+          channel.ackLocally(
+            event.message_id,
+            !!channel.lastMessageId &&
+              event.message_id.localeCompare(channel.lastMessageId) < 0,
+          );
+        }
+
         client.emit("channelAcknowledged", channel, event.message_id);
       }
       break;

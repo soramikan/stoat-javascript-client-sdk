@@ -750,19 +750,16 @@ export class Channel {
   #manuallyMarked?: boolean;
 
   /**
-   * Mark a channel as read
+   * Apply a channel acknowledgement to the local unread state.
    * @param message Last read message or its ID
-   * @param skipRateLimiter Whether to skip the internal rate limiter
-   * @param skipRequest For internal updates only
    * @param skipNextMarking For internal usage only
-   * @requires `SavedMessages`, `DirectMessage`, `Group`, `TextChannel`
+   * @returns The acknowledged message ID, if an acknowledgement was applied
+   * @internal
    */
-  async ack(
+  ackLocally(
     message?: Message | string,
-    skipRateLimiter?: boolean,
-    skipRequest?: boolean,
     skipNextMarking?: boolean,
-  ): Promise<void> {
+  ): string | undefined {
     if (!message && this.#manuallyMarked) {
       this.#manuallyMarked = false;
       return;
@@ -791,15 +788,35 @@ export class Channel {
       }
     });
 
+    return lastMessageId;
+  }
+
+  /**
+   * Mark a channel as read
+   * @param message Last read message or its ID
+   * @param skipRateLimiter Whether to skip the internal rate limiter
+   * @param skipRequest For internal updates only
+   * @param skipNextMarking For internal usage only
+   * @requires `SavedMessages`, `DirectMessage`, `Group`, `TextChannel`
+   */
+  async ack(
+    message?: Message | string,
+    skipRateLimiter?: boolean,
+    skipRequest?: boolean,
+    skipNextMarking?: boolean,
+  ): Promise<void> {
+    const lastMessageId = this.ackLocally(message, skipNextMarking);
+    if (!lastMessageId) return;
+
     // Skip request if not needed
     if (skipRequest) return;
 
     /**
      * Send the actual acknowledgement request
      */
-    const performAck = (): void => {
+    const performAck = async (): Promise<void> => {
       this.#ackLimit = undefined;
-      this.#collection.client.api.put(
+      await this.#collection.client.api.put(
         `/channels/${this.id}/ack/${lastMessageId as ""}`,
       );
     };
@@ -808,10 +825,12 @@ export class Channel {
 
     clearTimeout(this.#ackTimeout);
     if (this.#ackLimit && +new Date() > this.#ackLimit) {
-      performAck();
+      return performAck();
     }
 
-    this.#ackTimeout = setTimeout(performAck, 1500) as unknown as number;
+    this.#ackTimeout = setTimeout(() => {
+      void performAck();
+    }, 1500) as unknown as number;
 
     if (!this.#ackLimit) {
       this.#ackLimit = +new Date() + 4e3;
